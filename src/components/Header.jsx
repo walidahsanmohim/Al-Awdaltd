@@ -1,9 +1,9 @@
 import { STORE } from '../data/store.js'
 import { useCart } from '../context/CartContext.jsx'
 import { WHATSAPP_NUMBER } from '../utils/orderMessage.js'
-import { CartIcon, PhoneIcon, SearchIcon, WhatsAppIcon } from './Icons.jsx'
+import { CartIcon, PhoneIcon, WhatsAppIcon } from './Icons.jsx'
 
-export default function Header({ query, setQuery, onOpenCheckout }) {
+export default function Header({ onOpenCheckout }) {
   const { count, setOpen } = useCart()
 
   return (
@@ -53,29 +53,6 @@ export default function Header({ query, setQuery, onOpenCheckout }) {
             Contact
           </a>
         </nav>
-        <div className="relative mx-auto hidden w-full max-w-md md:block">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-emerald-deep/50" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })
-            }}
-            placeholder="খেজুর, কিশমিশ, বাদাম খুঁজুন..."
-            aria-label="পণ্য খুঁজুন"
-            className="bn w-full rounded-full border border-cream/20 bg-cream py-2.5 pr-9 pl-10 text-sm text-ink outline-none ring-gold/40 placeholder:text-ink/40 focus:ring-2"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label="Clear search"
-              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full px-1 text-lg leading-none text-ink/40 hover:text-ink"
-            >
-              ×
-            </button>
-          )}
-        </div>
         <div className="ml-auto flex items-center gap-2">
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}`}
@@ -106,31 +83,6 @@ export default function Header({ query, setQuery, onOpenCheckout }) {
               </span>
             )}
           </button>
-        </div>
-      </div>
-      <div className="px-4 pb-3 md:hidden">
-        <div className="relative">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-emerald-deep/50" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' })
-            }}
-            placeholder="পণ্য খুঁজুন..."
-            aria-label="পণ্য খুঁজুন"
-            className="bn w-full rounded-full border border-cream/20 bg-cream py-2.5 pr-9 pl-10 text-sm text-ink outline-none"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label="Clear search"
-              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full px-1 text-lg leading-none text-ink/40 hover:text-ink"
-            >
-              ×
-            </button>
-          )}
         </div>
       </div>
     </header>

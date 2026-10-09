@@ -63,9 +63,9 @@ export default function App() {
   const hasActiveFilter = query.trim() !== '' || category !== 'all'
 
   return (
-    <div className="min-h-screen pt-[132px] md:pt-[104px]">
-      {/* 1. TOP NAVBAR — fixed: Logo, Name, Menu, Search, Cart */}
-      <Header query={query} setQuery={setQuery} onOpenCheckout={() => setCheckoutOpen(true)} />
+    <div className="min-h-screen pt-[64px] md:pt-[104px]">
+      {/* 1. TOP NAVBAR — fixed: Logo, Name, Menu, Cart */}
+      <Header onOpenCheckout={() => setCheckoutOpen(true)} />
 
       {/* 2. HERO VIDEO SECTION — full-width unlimited loop, no overlay */}
       <Hero />
