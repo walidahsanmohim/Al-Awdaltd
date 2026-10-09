@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext.jsx'
 import { formatBdt } from '../utils/money.js'
 import { ZONE } from '../utils/shipping.js'
 import { buildOrderMessage } from '../utils/orderMessage.js'
+import { buildTelegramOrderMessage, sendTelegramOrder } from '../utils/telegram.js'
 import { CloseIcon, WhatsAppIcon } from './Icons.jsx'
 
 const emptyForm = {
@@ -19,6 +20,8 @@ export default function Checkout({ open, onClose }) {
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
   const [codDone, setCodDone] = useState(null)
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }))
 
@@ -49,13 +52,23 @@ export default function Checkout({ open, onClose }) {
     if (!opened) window.location.href = whatsappUrl
   }
 
-  const onCod = (e) => {
+  const onCod = async (e) => {
     e.preventDefault()
-    if (!validate() || items.length === 0) return
-    const message = buildOrderMessage({ ...payload(), method: 'Cash on Delivery (COD)' })
+    if (!validate() || items.length === 0 || sending) return
+    setSending(true)
+    setSendError('')
     const orderId = `AWDA-${Date.now().toString().slice(-8)}`
-    setCodDone({ orderId, message })
-    clearCart()
+    try {
+      const telegramText = buildTelegramOrderMessage({ orderId, ...payload() })
+      await sendTelegramOrder(telegramText)
+      const message = buildOrderMessage({ ...payload(), method: 'Cash on Delivery (COD)' })
+      setCodDone({ orderId, message })
+      clearCart()
+    } catch (err) {
+      setSendError(err?.message || 'অর্ডার পাঠানো যায়নি। আবার চেষ্টা করুন।')
+    } finally {
+      setSending(false)
+    }
   }
 
   if (!open) return null
@@ -71,11 +84,16 @@ export default function Checkout({ open, onClose }) {
         </div>
 
         {codDone ? (
-          <div className="space-y-4 p-6">
-            <p className="rounded-2xl bg-emerald-deep p-5 text-gold-soft">
-              Order received. Reference <strong>{codDone.orderId}</strong>. We will confirm by phone. Pay cash on delivery.
+          <div className="space-y-4 p-6 text-center">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-deep text-2xl text-gold-soft">
+              ✓
+            </div>
+            <p className="bn text-xl font-semibold text-emerald-ink">
+              আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে! আমরা দ্রুত আপনার সাথে যোগাযোগ করব।
             </p>
-            <pre className="whitespace-pre-wrap rounded-2xl bg-white p-4 text-sm text-ink/80">{codDone.message}</pre>
+            <p className="text-sm text-ink/60">
+              Order reference <strong>{codDone.orderId}</strong>. Pay cash on delivery.
+            </p>
             <button
               type="button"
               onClick={() => {
@@ -171,9 +189,14 @@ export default function Checkout({ open, onClose }) {
                 >
                   <WhatsAppIcon /> Order via WhatsApp
                 </button>
-                <button type="submit" className="w-full rounded-full bg-emerald-deep py-3 font-semibold text-gold-soft">
-                  Place COD order
+                <button
+                  type="submit"
+                  disabled={sending || items.length === 0}
+                  className="w-full rounded-full bg-emerald-deep py-3 font-semibold text-gold-soft disabled:opacity-60"
+                >
+                  {sending ? 'Sending order…' : 'Place COD order'}
                 </button>
+                {sendError && <p className="bn text-center text-sm text-red-700">{sendError}</p>}
                 <p className="text-center text-xs text-ink/50">WhatsApp: {STORE.phoneDisplay}</p>
               </div>
             </div>
