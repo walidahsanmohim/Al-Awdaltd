@@ -42,12 +42,22 @@ export default function ProductCard({ product }) {
         <span className="absolute top-2 left-2 rounded-full bg-emerald-ink/90 px-2 py-0.5 text-[10px] tracking-wide text-gold-soft md:top-3 md:left-3 md:px-3 md:py-1 md:text-[11px]">
           {cat?.labelEn}
         </span>
+        {product.saleBadge && (
+          <span className="absolute top-2 right-2 animate-pulse rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-white shadow-lg md:top-3 md:right-3 md:px-3 md:py-1 md:text-[11px]">
+            {product.saleBadge}
+          </span>
+        )}
       </div>
       <div className="flex flex-1 flex-col p-3 md:p-4">
         <h3 className="bn text-base font-semibold text-emerald-ink md:text-lg">{product.name}</h3>
         <p className="text-xs text-ink/60 md:text-sm">{product.nameEn}</p>
         <p className="bn mt-1.5 line-clamp-2 text-xs text-ink/70 md:mt-2 md:text-sm">{product.description}</p>
-        <p className="mt-2 font-display text-xl text-emerald-mid md:mt-3 md:text-2xl">{formatBdt(variant.price)}</p>
+        <div className="mt-2 flex flex-wrap items-baseline gap-2 md:mt-3">
+          <p className="font-display text-xl text-emerald-mid md:text-2xl">{formatBdt(variant.price)}</p>
+          {variant.compareAt && variant.compareAt > variant.price && (
+            <p className="text-xs text-ink/40 line-through md:text-sm">{formatBdt(variant.compareAt)}</p>
+          )}
+        </div>
         <p className="bn text-[11px] text-ink/50 md:text-xs">{product.unitLabel}</p>
 
         {product.variants.length > 1 && (

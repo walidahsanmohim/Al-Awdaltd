@@ -256,3 +256,18 @@ export const PRODUCTS = [
     ],
   },
 ]
+
+// Flash-sale badges + struck-through originals for featured items (Ajwa & Medjool).
+const FLASH_SALE = {
+  'vip-ajwa': { badge: '১০% ছাড়', compareAt: { 'vip-ajwa-1kg': 1610 } },
+  'prem-ajwa': { badge: '১০% ছাড়', compareAt: { 'prem-ajwa-1kg': 1390 } },
+  'vip-medjool': { badge: 'হট অফার', compareAt: { 'vip-medjool-1kg': 1990 } },
+  'prem-medjool': { badge: 'হট অফার', compareAt: { 'prem-medjool-1kg': 1790 } },
+}
+
+PRODUCTS.forEach((p) => {
+  const sale = FLASH_SALE[p.id]
+  if (!sale) return
+  p.saleBadge = sale.badge
+  p.variants = p.variants.map((v) => (sale.compareAt[v.id] ? { ...v, compareAt: sale.compareAt[v.id] } : v))
+})

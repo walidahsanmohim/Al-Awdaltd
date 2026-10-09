@@ -16,9 +16,9 @@ export const STORE = {
 }
 
 export const CATEGORIES = [
-  { id: 'all', label: 'সব পণ্য', labelEn: 'All' },
+  { id: 'all', label: 'সব পন্য', labelEn: 'All' },
   { id: 'vip', label: 'ভি আই পি - বড় সাইজ', labelEn: 'VIP Large' },
-  { id: 'premium', label: 'প্রিমিয়াম - মিডিয়াম', labelEn: 'Premium Medium' },
-  { id: 'carton', label: 'কার্টুন', labelEn: 'Carton Packs' },
-  { id: 'dry', label: 'অন্যান্য পন্য', labelEn: 'Dry Fruits' },
+  { id: 'premium', label: 'প্রিমিয়াম - মিডিয়াম সাইজ', labelEn: 'Premium Medium' },
+  { id: 'carton', label: 'কার্টুন প্যাক', labelEn: 'Carton Packs' },
+  { id: 'dry', label: 'ড্রাই ফ্রুটস', labelEn: 'Dry Fruits' },
 ]
