@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { PRODUCTS } from './data/products.js'
-import { CATEGORIES } from './data/store.js'
+import { CATEGORIES, DATE_GROUPS } from './data/store.js'
 import { useCart } from './context/CartContext.jsx'
 import Header from './components/Header.jsx'
 import Hero from './components/Hero.jsx'
@@ -13,10 +13,18 @@ import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Footer from './components/Footer.jsx'
 
+// Browse-tab matching: 'dates' covers all date groups (vip/premium/carton).
+function matchesCategory(p, category) {
+  if (category === 'all') return true
+  if (category === 'dates') return DATE_GROUPS.includes(p.category)
+  return p.category === category
+}
+
 function matchesSearch(p, q) {
   const cat = CATEGORIES.find((c) => c.id === p.category)
+  const groupLabel = p.category === 'dry' ? 'ড্রাই ফ্রুটস dry fruits' : 'খেজুর dates'
   const priceStrings = p.variants.flatMap((v) => [String(v.price), v.label.toLowerCase()])
-  const haystack = [p.name, p.nameEn, p.description, p.unitLabel, p.id, cat?.label, cat?.labelEn, cat?.id, ...priceStrings]
+  const haystack = [p.name, p.nameEn, p.description, p.unitLabel, p.id, groupLabel, cat?.label, cat?.labelEn, cat?.id, ...priceStrings]
     .filter(Boolean)
     .join(' ')
     .toLowerCase()
@@ -35,8 +43,7 @@ export default function App() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return PRODUCTS.filter((p) => {
-      const catOk = category === 'all' || p.category === category
-      if (!catOk) return false
+      if (!matchesCategory(p, category)) return false
       if (!q) return true
       return matchesSearch(p, q)
     })
@@ -44,14 +51,15 @@ export default function App() {
 
   const counts = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const out = { all: 0 }
+    const out = {}
     CATEGORIES.forEach((c) => {
-      if (c.id !== 'all') out[c.id] = 0
+      out[c.id] = 0
     })
     PRODUCTS.forEach((p) => {
       if (q && !matchesSearch(p, q)) return
       out.all += 1
-      if (out[p.category] != null) out[p.category] += 1
+      if (matchesCategory(p, 'dates')) out.dates += 1
+      if (out[p.category] != null && p.category !== 'dates') out[p.category] += 1
     })
     return out
   }, [query])
@@ -76,12 +84,13 @@ export default function App() {
       {/* 3. NOTICE BAR — under flash sale */}
       <NoticeBar />
 
-      {/* 4. RESPONSIVE PRODUCT GRID — 2 mobile / 3 tablet / 4 desktop */}
+      {/* 4. CATEGORY-FIRST BROWSING — big tap targets, then secondary search */}
       <main id="shop" className="mx-auto max-w-7xl scroll-mt-32 px-3 pt-6 sm:px-4 md:pt-8">
         <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-gold">The Collection</p>
             <h2 className="bn font-display text-2xl text-emerald-ink md:text-3xl">খেজুর ও শুকনো ফল</h2>
+            <p className="bn mt-1 text-sm text-ink/60">৮ জাতের খেজুর · ৫ জাতের ড্রাই ফ্রুটস — ক্যাটাগরিতে ট্যাপ করেই বেছে নিন</p>
           </div>
           <p className="text-sm text-ink/60" aria-live="polite">
             {query.trim() ? (
@@ -93,44 +102,51 @@ export default function App() {
             )}
           </p>
         </div>
-        <div className="relative mb-2">
-          <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-emerald-deep/40">⌕</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="পণ্যের নাম, ক্যাটাগরি বা দাম লিখে খুঁজুন… (যেমন: আজুয়া / dry / 1250)"
-            aria-label="পণ্য খুঁজুন"
-            className="bn w-full rounded-2xl border border-emerald-deep/15 bg-white py-3 pr-10 pl-11 text-sm text-ink shadow-sm outline-none placeholder:text-ink/40 focus:ring-2 focus:ring-gold/50"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label="Clear search"
-              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full px-1 text-lg leading-none text-ink/40 hover:text-ink"
-            >
-              ×
-            </button>
-          )}
-        </div>
+        <CategoryBar active={category} setActive={setCategory} counts={counts} />
+        <details className="group mt-2">
+          <summary className="bn inline-flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-emerald-mid [&::-webkit-details-marker]:hidden">
+            <span aria-hidden="true">⌕</span> নাম বা দাম লিখে খুঁজুন (ঐচ্ছিক)
+          </summary>
+          <div className="relative mt-2">
+            <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-emerald-deep/40">⌕</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="পণ্যের নাম, ক্যাটাগরি বা দাম লিখে খুঁজুন… (যেমন: আজুয়া / dry / 1250)"
+              aria-label="পণ্য খুঁজুন"
+              className="bn w-full rounded-2xl border border-emerald-deep/15 bg-white py-3 pr-10 pl-11 text-sm text-ink shadow-sm outline-none placeholder:text-ink/40 focus:ring-2 focus:ring-gold/50"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+                className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full px-1 text-lg leading-none text-ink/40 hover:text-ink"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </details>
         {hasActiveFilter && (
           <button
             type="button"
             onClick={resetFilters}
-            className="bn mb-1 text-xs font-semibold text-emerald-mid underline-offset-2 hover:underline"
+            className="bn mt-2 mb-1 text-xs font-semibold text-emerald-mid underline-offset-2 hover:underline"
           >
             ✕ ফিল্টার রিসেট করুন
           </button>
         )}
-        <CategoryBar active={category} setActive={setCategory} counts={counts} />
         {filtered.length === 0 ? (
           <div className="bn mt-8 rounded-3xl bg-white p-10 text-center shadow-sm">
             <p className="text-4xl">🔍</p>
             <p className="mt-3 text-lg font-semibold text-emerald-ink">কোনো পন্য পাওয়া যায়নি</p>
-            {query.trim() && (
+            {query.trim() ? (
               <p className="mt-1 text-sm text-ink/60">
-                “{query.trim()}” দিয়ে কিছু খুঁজে পাওয়া যায়নি। অন্য নাম, ক্যাটাগরি বা দাম লিখে চেষ্টা করুন।
+                “{query.trim()}” দিয়ে কিছু খুঁজে পাওয়া যায়নি। অন্য নাম বা ক্যাটাগরি বেছে চেষ্টা করুন।
               </p>
+            ) : (
+              <p className="mt-1 text-sm text-ink/60">এই ক্যাটাগরিতে কোনো পণ্য নেই। অন্য ক্যাটাগরি বেছে দেখুন।</p>
             )}
             <button
               type="button"
@@ -141,7 +157,7 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+          <div id="shop-grid" className="mt-4 grid scroll-mt-32 grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {filtered.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

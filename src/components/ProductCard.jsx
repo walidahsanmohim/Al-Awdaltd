@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
-import { CATEGORIES } from '../data/store.js'
+import { GROUP_LABEL_EN } from '../data/store.js'
 import { formatBdt } from '../utils/money.js'
 
 export default function ProductCard({ product }) {
@@ -8,7 +8,7 @@ export default function ProductCard({ product }) {
   const [variantId, setVariantId] = useState(product.variants[0].id)
   const [qty, setQty] = useState(1)
   const variant = product.variants.find((v) => v.id === variantId) || product.variants[0]
-  const cat = CATEGORIES.find((c) => c.id === product.category)
+  const groupLabel = GROUP_LABEL_EN[product.category] || product.category
 
   const onAdd = () => {
     addItem(
@@ -40,7 +40,7 @@ export default function ProductCard({ product }) {
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
         <span className="absolute top-2 left-2 rounded-full bg-emerald-ink/90 px-2 py-0.5 text-[10px] tracking-wide text-gold-soft md:top-3 md:left-3 md:px-3 md:py-1 md:text-[11px]">
-          {cat?.labelEn}
+          {groupLabel}
         </span>
         {product.saleBadge && (
           <span className="absolute top-2 right-2 animate-pulse rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-white shadow-lg md:top-3 md:right-3 md:px-3 md:py-1 md:text-[11px]">
