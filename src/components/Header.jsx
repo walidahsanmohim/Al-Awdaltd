@@ -49,6 +49,9 @@ export default function Header({ onOpenCheckout }) {
           <a href="#reviews" className="transition hover:text-gold-soft">
             Reviews
           </a>
+          <a href="#gallery" className="transition hover:text-gold-soft">
+            Gallery
+          </a>
           <a href="#contact" className="transition hover:text-gold-soft">
             Contact
           </a>

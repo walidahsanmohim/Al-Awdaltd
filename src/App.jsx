@@ -8,10 +8,12 @@ import FlashSale from './components/FlashSale.jsx'
 import NoticeBar from './components/NoticeBar.jsx'
 import CategoryBar from './components/CategoryBar.jsx'
 import ProductCard from './components/ProductCard.jsx'
+import Gallery from './components/Gallery.jsx'
 import Reviews from './components/Reviews.jsx'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Footer from './components/Footer.jsx'
+import AdminProofUpload from './components/AdminProofUpload.jsx'
 
 // Browse-tab matching: 'dates' covers all date groups (vip/premium/carton).
 function matchesCategory(p, category) {
@@ -39,6 +41,7 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [adminStage, setAdminStage] = useState('closed') // closed | auth | open
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -168,7 +171,11 @@ export default function App() {
       {/* CUSTOMER REVIEWS */}
       <Reviews />
 
-      <Footer />
+      {/* HAPPY CUSTOMERS GALLERY */}
+      <Gallery />
+
+      <Footer onSecretTrigger={() => setAdminStage('auth')} />
+      <AdminProofUpload stage={adminStage} setStage={setAdminStage} />
       <CartDrawer onCheckout={() => setCheckoutOpen(true)} />
       <Checkout open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
       {toast && (
