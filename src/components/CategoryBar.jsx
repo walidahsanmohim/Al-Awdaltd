@@ -19,16 +19,13 @@ export default function CategoryBar({ active, setActive, counts }) {
               setActive(cat.id)
               document.getElementById('shop-grid')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
             }}
-            className={`bn flex min-h-[52px] shrink-0 items-center gap-2 rounded-2xl px-5 py-3 text-[15px] font-bold transition active:scale-95 sm:min-h-[56px] sm:flex-1 sm:justify-center sm:px-4 sm:text-base ${
+            className={`bn flex min-h-[48px] shrink-0 items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap transition active:scale-95 sm:min-h-[48px] sm:flex-1 sm:justify-center sm:px-4 ${
               selected
-                ? 'bg-emerald-deep text-gold-soft shadow-lg ring-2 ring-gold'
-                : 'border-2 border-emerald-deep/20 bg-white text-emerald-deep shadow-sm hover:border-gold hover:bg-gold-soft/20'
+                ? 'bg-emerald-deep text-gold-soft shadow-md ring-2 ring-gold'
+                : 'border border-emerald-deep/20 bg-white text-emerald-deep shadow-sm hover:border-gold hover:bg-gold-soft/20'
             }`}
           >
-            <span aria-hidden="true" className="text-xl leading-none">
-              {cat.icon}
-            </span>
-            <span className="whitespace-nowrap">{cat.label}</span>
+            <span>{cat.label}</span>
             {counts && counts[cat.id] != null && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-bold ${

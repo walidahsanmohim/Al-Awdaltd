@@ -16,11 +16,11 @@ export const STORE = {
 }
 
 export const CATEGORIES = [
-  { id: 'all', label: 'সব পণ্য', labelEn: 'All', icon: '🛒' },
-  { id: 'dates', label: 'খেজুর (৮ জাত)', labelEn: 'Dates · 8 varieties', icon: '🌴' },
-  { id: 'dry', label: 'ড্রাই ফ্রুটস (৫ জাত)', labelEn: 'Dry Fruits · 5 varieties', icon: '🥜' },
-  { id: 'vip', label: 'ভিআইপি সাইজ', labelEn: 'VIP Size', icon: '⭐' },
-  { id: 'carton', label: 'কার্টুন প্যাক', labelEn: 'Carton Packs', icon: '📦' },
+  { id: 'all', label: 'সব পণ্য', labelEn: 'All' },
+  { id: 'dates', label: 'খেজুর (৮ জাত)', labelEn: 'Dates · 8 varieties' },
+  { id: 'dry', label: 'ড্রাই ফ্রুটস (৫ জাত)', labelEn: 'Dry Fruits · 5 varieties' },
+  { id: 'vip', label: 'ভিআইপি - বড় সাইজ', labelEn: 'VIP Size' },
+  { id: 'carton', label: 'কার্টুন প্যাক', labelEn: 'Carton Packs' },
 ]
 
 // Raw product groups (vip / premium / carton are all dates; dry is dry fruits).
