@@ -22,7 +22,55 @@ function matchesCategory(p, category) {
   return p.category === category
 }
 
+const BN_DIGITS = '০১২৩৪৫৬৭৮৯'
+
+function toAsciiDigits(s) {
+  return String(s).replace(/[০-৯]/g, (d) => String(BN_DIGITS.indexOf(d)))
+}
+
+function cleanNumberToken(raw) {
+  return toAsciiDigits(raw)
+    .replace(/[,\s৳]/g, '')
+    .replace(/^(tk|bdt)+/i, '')
+    .replace(/(tk|bdt)+$/i, '')
+}
+
+function parseBudget(raw) {
+  const t = cleanNumberToken(raw)
+  if (!/^\d+(\.\d+)?$/.test(t)) return null
+  const n = Number(t)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+function cheapestPrice(p) {
+  const prices = (p.variants || []).map((v) => Number(v.price)).filter(Number.isFinite)
+  return prices.length ? Math.min(...prices) : Infinity
+}
+
+// Split tokens into numeric budget caps + text tokens.
+// Explicit `price:1000` form is also accepted as a budget token.
+function splitQuery(q) {
+  const budgets = []
+  const words = []
+  q.split(/\s+/).filter(Boolean).forEach((tok) => {
+    const m = toAsciiDigits(tok).match(/^price:([\d.,৳]+(?:\.\d+)?(?:tk|bdt)?)$/i)
+    if (m) {
+      const b = parseBudget(m[1])
+      if (b != null) budgets.push(b)
+      return
+    }
+    const b = parseBudget(tok)
+    if (b != null) budgets.push(b)
+    else words.push(tok)
+  })
+  return { budgets, words }
+}
+
 function matchesSearch(p, q) {
+  const { budgets, words } = splitQuery(q)
+  // A numeric token is a maximum-budget threshold: cheapest variant must fit.
+  if (budgets.length && !(cheapestPrice(p) <= Math.min(...budgets))) return false
+  if (!words.length) return true
   const cat = CATEGORIES.find((c) => c.id === p.category)
   const groupLabel = p.category === 'dry' ? 'ড্রাই ফ্রুটস dry fruits' : 'খেজুর dates'
   const priceStrings = p.variants.flatMap((v) => [String(v.price), v.label.toLowerCase()])
@@ -30,10 +78,7 @@ function matchesSearch(p, q) {
     .filter(Boolean)
     .join(' ')
     .toLowerCase()
-  return q
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((token) => haystack.includes(token))
+  return words.every((token) => haystack.includes(token))
 }
 
 export default function App() {
@@ -73,6 +118,11 @@ export default function App() {
   }
   const hasActiveFilter = query.trim() !== '' || category !== 'all'
 
+  const budgetCap = useMemo(() => {
+    const { budgets } = splitQuery(query.trim().toLowerCase())
+    return budgets.length ? Math.min(...budgets) : null
+  }, [query])
+
   return (
     <div className="min-h-screen pt-[64px] md:pt-[104px]">
       {/* 1. TOP NAVBAR — fixed: Logo, Name, Menu, Cart */}
@@ -108,16 +158,16 @@ export default function App() {
         <CategoryBar active={category} setActive={setCategory} counts={counts} />
         <details className="group mt-2">
           <summary className="bn inline-flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-ink/50 hover:text-emerald-mid [&::-webkit-details-marker]:hidden">
-            <span aria-hidden="true">⌕</span> নাম বা দাম লিখে খুঁজুন (ঐচ্ছিক)
+            <span aria-hidden="true">⌕</span> নাম বা বাজেট লিখে খুঁজুন (ঐচ্ছিক)
           </summary>
           <div className="relative mt-2">
             <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-emerald-deep/40">⌕</span>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="পণ্যের নাম, ক্যাটাগরি বা দাম লিখে খুঁজুন… (যেমন: আজুয়া / dry / 1250)"
+              placeholder="পণ্যের নাম বা বাজেট লিখে খুঁজুন (যেমন: আজুয়া / 1000)"
               aria-label="পণ্য খুঁজুন"
-              className="bn w-full rounded-2xl border border-emerald-deep/15 bg-white py-3 pr-10 pl-11 text-sm text-ink shadow-sm outline-none placeholder:text-ink/40 focus:ring-2 focus:ring-gold/50"
+              className="bn w-full rounded-full border border-emerald-deep/20 bg-white py-3 pr-10 pl-11 text-sm text-ink shadow-[0_1px_10px_rgba(15,61,46,0.10)] transition outline-none placeholder:text-ink/40 focus:border-gold/60 focus:ring-2 focus:ring-gold/40 sm:text-[15px]"
             />
             {query && (
               <button
@@ -127,6 +177,15 @@ export default function App() {
                 className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full px-1 text-lg leading-none text-ink/40 hover:text-ink"
               >
                 ×
+              </button>
+            )}
+            {budgetCap != null && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="bn mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-deep px-3 py-1 text-xs font-semibold text-gold-soft"
+              >
+                ৳{budgetCap.toLocaleString('en-IN')} পর্যন্ত ×
               </button>
             )}
           </div>
@@ -146,7 +205,7 @@ export default function App() {
             <p className="mt-3 text-lg font-semibold text-emerald-ink">কোনো পন্য পাওয়া যায়নি</p>
             {query.trim() ? (
               <p className="mt-1 text-sm text-ink/60">
-                “{query.trim()}” দিয়ে কিছু খুঁজে পাওয়া যায়নি। অন্য নাম বা ক্যাটাগরি বেছে চেষ্টা করুন।
+                “{query.trim()}” দিয়ে কিছু খুঁজে পাওয়া যায়নি। অন্য নাম, বাজেট বা ক্যাটাগরি দিয়ে চেষ্টা করুন।
               </p>
             ) : (
               <p className="mt-1 text-sm text-ink/60">এই ক্যাটাগরিতে কোনো পণ্য নেই। অন্য ক্যাটাগরি বেছে দেখুন।</p>

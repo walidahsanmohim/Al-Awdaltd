@@ -242,7 +242,7 @@ export default function Reviews() {
     }
   }
 
-  const input = 'bn w-full rounded-xl border border-emerald-deep/15 bg-cream px-3 py-2.5 text-sm text-ink outline-none focus:ring-2 focus:ring-gold/50'
+  const input = 'bn w-full max-w-full rounded-xl border border-emerald-deep/15 bg-cream px-3 py-2.5 text-sm text-ink outline-none focus:ring-2 focus:ring-gold/50'
 
   return (
     <section id="reviews" className="mx-auto max-w-7xl scroll-mt-32 px-3 pt-10 sm:px-4 md:pt-14">
@@ -277,9 +277,9 @@ export default function Reviews() {
             </div>
           )}
           {!loading && all.length > 0 && (
-            <div className="relative">
+            <div className="mx-auto w-full max-w-sm sm:max-w-md">
               <div
-                className="overflow-hidden"
+                className="relative overflow-hidden"
                 onTouchStart={onTouchStart}
                 onTouchEnd={onTouchEnd}
               >
@@ -288,44 +288,44 @@ export default function Reviews() {
                   style={{ transform: `translateX(-${index * 100}%)` }}
                 >
                   {all.map((r) => (
-                    <div key={r.id} className="w-full shrink-0 px-1 sm:px-2">
-                      <div className="mx-auto w-full max-w-md">
-                        <ReviewCard r={r} onOpen={(p) => setLightbox(p)} />
-                      </div>
+                    <div key={r.id} className="w-full shrink-0">
+                      <ReviewCard r={r} onOpen={(p) => setLightbox(p)} />
                     </div>
                   ))}
                 </div>
+                {all.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={prev}
+                      aria-label="আগের রিভিউ"
+                      className="absolute top-1/2 left-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={next}
+                      aria-label="পরের রিভিউ"
+                      className="absolute top-1/2 right-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
               </div>
               {all.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={prev}
-                    aria-label="আগের রিভিউ"
-                    className="absolute top-1/2 -left-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep sm:-left-2"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={next}
-                    aria-label="পরের রিভিউ"
-                    className="absolute top-1/2 -right-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep sm:-right-2"
-                  >
-                    ›
-                  </button>
-                  <div className="mt-3 flex justify-center gap-1.5">
-                    {all.map((r, i) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => goTo(i)}
-                        aria-label={`রিভিউ ${i + 1}`}
-                        className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-gold' : 'w-1.5 bg-emerald-deep/20'}`}
-                      />
-                    ))}
-                  </div>
-                </>
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  {all.map((r, i) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => goTo(i)}
+                      aria-label={`রিভিউ ${i + 1}`}
+                      className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-gold' : 'w-1.5 bg-emerald-deep/20'}`}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
@@ -333,7 +333,7 @@ export default function Reviews() {
             <p className="bn rounded-2xl bg-white p-6 text-center text-ink/60">এখনো কোনো রিভিউ নেই — প্রথম রিভিউটি আপনিই দিন!</p>
           )}
         </div>
-        <div className="h-fit rounded-3xl border border-gold/40 bg-white p-4 shadow-md sm:p-5 md:sticky md:top-32 md:p-6">
+        <div className="box-border h-fit w-full max-w-lg mx-auto rounded-3xl border border-gold/40 bg-white px-4 py-5 shadow-md sm:px-6 sm:py-6 md:sticky md:top-32">
           <h3 className="bn font-display text-lg text-emerald-ink sm:text-xl">Add Your Review</h3>
           <p className="bn mt-1 text-sm text-ink/60">আপনার অভিজ্ঞতা শেয়ার করুন — এটি অন্যদের সাহায্য করবে।</p>
           <form onSubmit={submit} className="mt-4 space-y-3 sm:space-y-4">
@@ -353,12 +353,12 @@ export default function Reviews() {
             <div className="text-sm">
               <span className="bn mb-1 block font-medium text-emerald-ink">পণ্যের ছবি (ঐচ্ছিক)</span>
               <label
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-3 py-3 text-center transition ${
+                className={`flex w-full max-w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed px-3 py-3 text-center transition ${
                   photo ? 'border-emerald-mid/50 bg-emerald-ink/5' : 'border-emerald-deep/20 bg-cream hover:border-gold'
                 }`}
               >
-                <span aria-hidden="true" className="text-xl">📷</span>
-                <span className="bn text-xs text-ink/70">
+                <span aria-hidden="true" className="shrink-0 text-xl">📷</span>
+                <span className="bn min-w-0 flex-1 break-words text-xs text-ink/70">
                   {photo ? photo.name : 'খেজুর/ড্রাই ফ্রুটসের ছবি যোগ করুন (JPG/PNG, সর্বোচ্চ ৫MB)'}
                 </span>
                 <input
@@ -390,7 +390,7 @@ export default function Reviews() {
               </div>
             )}
             <button type="submit" disabled={sending}
-              className="bn w-full rounded-full bg-emerald-deep py-3 text-sm font-semibold text-gold-soft transition hover:opacity-90 disabled:opacity-60">
+              className="bn w-full max-w-full rounded-full bg-emerald-deep py-3 text-sm font-semibold text-gold-soft transition hover:opacity-90 disabled:opacity-60">
               {sending ? 'জমা হচ্ছে…' : 'রিভিউ জমা দিন'}
             </button>
           </form>
