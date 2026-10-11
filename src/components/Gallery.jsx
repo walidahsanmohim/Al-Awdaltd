@@ -2,10 +2,6 @@ import { useState } from 'react'
 import { useProofRows } from '../utils/supabase.js'
 import { GALLERY_PROOFS, TAG_STYLES } from '../data/galleryProofs.js'
 
-// Polaroid collage presets — slight rotations + varied aspect ratios.
-const ROTATIONS = ['-rotate-2', 'rotate-[1.6deg]', '-rotate-1', 'rotate-[2.2deg]', '-rotate-[1.6deg]', 'rotate-1']
-const RATIOS = ['aspect-[4/5]', 'aspect-square', 'aspect-[4/5]', 'aspect-[3/4]']
-
 /**
  * Gallery — "Happy Customers & Delivery Proofs".
  * Image source (highest priority first):
@@ -56,30 +52,26 @@ export default function Gallery() {
           <p className="mt-1 text-sm text-ink/60">আমাদের অর্ডার ও ডেলিভারির আসল প্রমাণ এখানে দেখা যাবে।</p>
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-cream-deep via-cream to-gold-soft/40 p-4 shadow-inner ring-1 ring-gold/20 sm:p-6">
-          <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 [&>*]:mb-7">
-            {tiles.map((t, i) => (
+        <div className="rounded-3xl border border-gold/20 bg-white/70 p-3 shadow-sm ring-1 ring-black/5 sm:p-4">
+          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 md:grid-cols-5">
+            {tiles.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setLightbox(t)}
-                className={`group relative block w-full cursor-zoom-in break-inside-avoid rounded-md bg-white p-2.5 pb-4 text-left shadow-[0_10px_30px_rgba(0,0,0,0.18)] ring-1 ring-black/5 transition-transform duration-300 select-none hover:z-10 hover:rotate-0 hover:scale-[1.04] hover:shadow-[0_22px_45px_rgba(0,0,0,0.28)] focus-visible:z-10 focus-visible:rotate-0 focus-visible:outline-none ${ROTATIONS[i % ROTATIONS.length]}`}
+                aria-label={t.title}
+                className="group relative block overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
               >
-                <span className="relative block">
-                  <img
-                    src={t.src}
-                    alt={t.title}
-                    loading="lazy"
-                    onError={() => setFailed((f) => (f[t.id] ? f : { ...f, [t.id]: true }))}
-                    className={`w-full ${RATIOS[i % RATIOS.length]} object-cover rounded-sm ring-1 ring-black/5`}
-                  />
-                  {/* scrapbook tape */}
-                  <span aria-hidden="true" className="absolute -top-2 left-1/2 h-4 w-16 -translate-x-1/2 rotate-[-3deg] rounded-[2px] bg-gold/30 shadow-sm" />
-                </span>
-                <span className="mt-3 block px-1 text-center">
-                  <span className="bn block text-sm font-bold text-emerald-ink">{t.title}</span>
-                  {t.quote ? <span className="bn mt-1 line-clamp-2 block text-[11px] leading-snug text-ink/60">{t.quote}</span> : null}
-                  <span className={`bn mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold text-white ${TAG_STYLES[t.tag] || 'bg-black/60'}`}>{t.tag}</span>
+                <img
+                  src={t.src}
+                  alt={t.title}
+                  loading="lazy"
+                  onError={() => setFailed((f) => (f[t.id] ? f : { ...f, [t.id]: true }))}
+                  className="h-24 w-full object-cover sm:h-32"
+                />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+                <span className={`bn pointer-events-none absolute bottom-1.5 left-1.5 max-w-[92%] truncate rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${TAG_STYLES[t.tag] || 'bg-black/60'}`}>
+                  {t.tag}
                 </span>
               </button>
             ))}

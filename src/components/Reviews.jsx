@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, REVIEWS_TABLE, mapReviewRow, isPublicReview, uploadReviewImage } from '../utils/supabase.js'
 
 export function usePublicPhotoReviews() {
@@ -56,6 +56,43 @@ function StarRow({ v, pick, big }) {
   )
 }
 
+function ReviewCard({ r, onOpen }) {
+  return (
+    <article className="overflow-hidden rounded-2xl border border-emerald-deep/10 bg-white shadow-sm">
+      {r.image_url && (
+        <button
+          type="button"
+          onClick={() => onOpen({ src: r.image_url, name: r.name })}
+          className="block w-full cursor-zoom-in"
+          aria-label={`${r.name}-এর ছবি বড় করে দেখুন`}
+        >
+          <img
+            src={r.image_url}
+            alt={`${r.name}-এর পণ্যের ছবি`}
+            loading="lazy"
+            className="h-44 w-full object-cover transition hover:opacity-95 sm:h-52"
+          />
+        </button>
+      )}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-ink/10 text-sm font-bold text-emerald-mid">
+              {(r.name || '?').charAt(0)}
+            </span>
+            <div className="min-w-0">
+              <p className="bn truncate font-semibold text-emerald-ink">{r.name}</p>
+              <p className="text-xs text-ink/50">{formatDate(r.created_at)}</p>
+            </div>
+          </div>
+          <StarRow v={Number(r.rating) || 0} />
+        </div>
+        <p className="bn mt-2.5 text-sm leading-relaxed text-ink/75">{r.comment}</p>
+      </div>
+    </article>
+  )
+}
+
 function formatDate(iso) {
   if (!iso) return ''
   try {
@@ -78,6 +115,8 @@ export default function Reviews() {
   const [ok, setOk] = useState(false)
   const [sending, setSending] = useState(false)
   const [lightbox, setLightbox] = useState(null)
+  const [index, setIndex] = useState(0)
+  const swipeRef = useRef(null)
 
   useEffect(() => {
     if (!lightbox) return
@@ -111,12 +150,13 @@ export default function Reviews() {
     setLoadError('')
     const { data, error } = await supabase
       .from(REVIEWS_TABLE)
-      .select('id, Name, Rating, Comment, image_url, created_at')
+      .select('id, Name, Rating, Comment, image_url, created_at, is_admin_proof')
+      .eq('is_admin_proof', false)
       .order('created_at', { ascending: false })
     if (error) {
       setLoadError('রিভিউ লোড করা যায়নি। পরে আবার চেষ্টা করুন।')
     } else {
-      setRemote(Array.isArray(data) ? data.map(mapReviewRow).filter(Boolean) : [])
+      setRemote(Array.isArray(data) ? data.map(mapReviewRow).filter(Boolean).filter((r) => !r.is_admin_proof) : [])
     }
     setLoading(false)
   }, [])
@@ -137,8 +177,29 @@ export default function Reviews() {
     }
   }, [fetchReviews])
 
-  const all = [...remote, ...SEEDS].filter(isPublicReview)
+  const all = [...remote, ...SEEDS].filter((r) => isPublicReview(r) && !r.is_admin_proof)
   const avg = all.length ? (all.reduce((s, r) => s + Number(r.rating || 0), 0) / all.length).toFixed(1) : '0.0'
+
+  const goTo = (i) => setIndex(((i % all.length) + all.length) % all.length)
+  const next = () => goTo(index + 1)
+  const prev = () => goTo(index - 1)
+
+  // Auto-slide: loops seamlessly back to the first card at the end.
+  useEffect(() => {
+    if (all.length <= 1) return
+    const id = setInterval(() => setIndex((i) => (i + 1) % all.length), 5000)
+    return () => clearInterval(id)
+  }, [all.length])
+
+  const onTouchStart = (e) => {
+    swipeRef.current = e.touches[0].clientX
+  }
+  const onTouchEnd = (e) => {
+    if (swipeRef.current == null) return
+    const dx = e.changedTouches[0].clientX - swipeRef.current
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev()
+    swipeRef.current = null
+  }
 
   const submit = async (e) => {
     e.preventDefault()
@@ -215,44 +276,67 @@ export default function Reviews() {
               </button>
             </div>
           )}
-          {!loading &&
-            all.map((r) => (
-              <article key={r.id} className="overflow-hidden rounded-2xl border border-emerald-deep/10 bg-white shadow-sm">
-                {r.image_url && (
+          {!loading && all.length > 0 && (
+            <div className="relative">
+              <div
+                className="overflow-hidden"
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
+              >
+                <div
+                  className="flex transition-transform duration-500 ease-out"
+                  style={{ transform: `translateX(-${index * 100}%)` }}
+                >
+                  {all.map((r) => (
+                    <div key={r.id} className="w-full shrink-0 px-1 sm:px-2">
+                      <div className="mx-auto w-full max-w-md">
+                        <ReviewCard r={r} onOpen={(p) => setLightbox(p)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {all.length > 1 && (
+                <>
                   <button
                     type="button"
-                    onClick={() => setLightbox({ src: r.image_url, name: r.name })}
-                    className="block w-full cursor-zoom-in"
-                    aria-label={`${r.name}-এর ছবি বড় করে দেখুন`}
+                    onClick={prev}
+                    aria-label="আগের রিভিউ"
+                    className="absolute top-1/2 -left-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep sm:-left-2"
                   >
-                    <img
-                      src={r.image_url}
-                      alt={`${r.name}-এর পণ্যের ছবি`}
-                      loading="lazy"
-                      className="h-44 w-full object-cover transition hover:opacity-95 sm:h-52"
-                    />
+                    ‹
                   </button>
-                )}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="bn font-semibold text-emerald-ink">{r.name}</p>
-                      <p className="text-xs text-ink/50">{formatDate(r.created_at)}</p>
-                    </div>
-                    <StarRow v={Number(r.rating) || 0} />
+                  <button
+                    type="button"
+                    onClick={next}
+                    aria-label="পরের রিভিউ"
+                    className="absolute top-1/2 -right-1 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white text-emerald-ink shadow-lg ring-1 ring-black/5 transition hover:bg-cream-deep sm:-right-2"
+                  >
+                    ›
+                  </button>
+                  <div className="mt-3 flex justify-center gap-1.5">
+                    {all.map((r, i) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => goTo(i)}
+                        aria-label={`রিভিউ ${i + 1}`}
+                        className={`h-1.5 rounded-full transition-all ${i === index ? 'w-5 bg-gold' : 'w-1.5 bg-emerald-deep/20'}`}
+                      />
+                    ))}
                   </div>
-                  <p className="bn mt-2 text-sm text-ink/75">{r.comment}</p>
-                </div>
-              </article>
-            ))}
+                </>
+              )}
+            </div>
+          )}
           {!loading && all.length === 0 && (
             <p className="bn rounded-2xl bg-white p-6 text-center text-ink/60">এখনো কোনো রিভিউ নেই — প্রথম রিভিউটি আপনিই দিন!</p>
           )}
         </div>
-        <div className="h-fit rounded-3xl border border-gold/40 bg-white p-5 shadow-md md:sticky md:top-32 md:p-6">
-          <h3 className="bn font-display text-xl text-emerald-ink">Add Your Review</h3>
+        <div className="h-fit rounded-3xl border border-gold/40 bg-white p-4 shadow-md sm:p-5 md:sticky md:top-32 md:p-6">
+          <h3 className="bn font-display text-lg text-emerald-ink sm:text-xl">Add Your Review</h3>
           <p className="bn mt-1 text-sm text-ink/60">আপনার অভিজ্ঞতা শেয়ার করুন — এটি অন্যদের সাহায্য করবে।</p>
-          <form onSubmit={submit} className="mt-4 space-y-3">
+          <form onSubmit={submit} className="mt-4 space-y-3 sm:space-y-4">
             <label className="block text-sm">
               <span className="bn mb-1 block font-medium text-emerald-ink">আপনার নাম *</span>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="যেমন: আব্দুল্লাহ" className={input} />
