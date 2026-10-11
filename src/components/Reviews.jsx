@@ -113,6 +113,7 @@ export default function Reviews() {
   const [photoPreview, setPhotoPreview] = useState('')
   const [err, setErr] = useState('')
   const [ok, setOk] = useState(false)
+  const [okPublic, setOkPublic] = useState(true)
   const [sending, setSending] = useState(false)
   const [lightbox, setLightbox] = useState(null)
   const [index, setIndex] = useState(0)
@@ -151,7 +152,9 @@ export default function Reviews() {
     const { data, error } = await supabase
       .from(REVIEWS_TABLE)
       .select('id, Name, Rating, Comment, image_url, created_at, is_admin_proof')
-      .eq('is_admin_proof', false)
+      // The live column is TEXT ('true'/'false' strings) and older rows are NULL,
+      // so match both false-string and NULL — otherwise submitted reviews vanish.
+      .or('is_admin_proof.is.null,is_admin_proof.eq.false')
       .order('created_at', { ascending: false })
     if (error) {
       setLoadError('রিভিউ লোড করা যায়নি। পরে আবার চেষ্টা করুন।')
@@ -218,7 +221,8 @@ export default function Reviews() {
           Rating: rating,
           Comment: text.trim(),
           image_url,
-          is_admin_proof: false,
+          // Column is TEXT in production ('true' strings for proofs) — send 'false' to match.
+          is_admin_proof: 'false',
         })
         .select('id, Name, Rating, Comment, image_url, created_at, is_admin_proof')
         .single()
@@ -236,13 +240,10 @@ export default function Reviews() {
       setRating(0)
       setText('')
       pickPhoto(null)
-      if (Number(rating) >= 4) {
-        setOk(true)
-        setTimeout(() => setOk(false), 4000)
-      } else {
-        setOk(false)
-        setErr('')
-      }
+      // Success notice for every rating; <4★ is held back from the public slider.
+      setOkPublic(Number(rating) >= 4)
+      setOk(true)
+      setTimeout(() => setOk(false), 4000)
     } catch (err) {
       setErr(err?.message || 'রিভিউ জমা দেওয়া যায়নি। আবার চেষ্টা করুন।')
     } finally {
@@ -394,7 +395,7 @@ export default function Reviews() {
             {ok && (
               <div className="bn rounded-xl bg-emerald-ink/5 p-3 text-center">
                 <p className="text-sm font-semibold text-emerald-mid">আপনার রিভিউটি সফলভাবে জমা হয়েছে!</p>
-                <p className="mt-0.5 text-xs text-ink/60">৪★/৫★ রিভিউ সঙ্গে সঙ্গে সবার কাছে দেখা যাবে।</p>
+                <p className="mt-0.5 text-xs text-ink/60">{okPublic ? '৪★/৫★ রিভিউ সঙ্গে সঙ্গে সবার কাছে দেখা যাবে।' : '৪★ বা বেশি রেটিং পাবলিক স্লাইডারে দেখানো হয়।'}</p>
               </div>
             )}
             <button type="submit" disabled={sending}

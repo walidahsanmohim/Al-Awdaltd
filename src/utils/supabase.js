@@ -7,7 +7,8 @@ const SUPABASE_ANON_KEY =
 
 // NOTE: table + columns are case-sensitive in this project:
 // table `Reviews`, columns: id, created_at, Name, Rating, Comment, image_url, is_admin_proof.
-// Admin proofs are flagged with the boolean `is_admin_proof = true` (there is NO `type` column).
+// Admin proofs are flagged with `is_admin_proof = 'true'` (stored as TEXT in production;
+// older public rows have NULL). There is NO `type` column.
 export const REVIEWS_TABLE = 'Reviews'
 export const REVIEW_COLS = { name: 'Name', rating: 'Rating', comment: 'Comment', imageUrl: 'image_url', isAdminProof: 'is_admin_proof' }
 export const REVIEW_IMAGE_BUCKET = 'Reviews-image'
