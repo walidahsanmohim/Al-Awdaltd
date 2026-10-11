@@ -213,16 +213,24 @@ export default function Reviews() {
       const image_url = await uploadReviewImage(photo)
       const { data, error } = await supabase
         .from(REVIEWS_TABLE)
-        .insert({ Name: name.trim(), Rating: rating, Comment: text.trim(), image_url })
-        .select('id, Name, Rating, Comment, image_url, created_at')
+        .insert({
+          Name: name.trim(),
+          Rating: rating,
+          Comment: text.trim(),
+          image_url,
+          is_admin_proof: false,
+        })
+        .select('id, Name, Rating, Comment, image_url, created_at, is_admin_proof')
         .single()
       if (error) throw new Error(error.message || 'insert failed')
       // Immediately refresh the list (realtime subscription also prepends it).
       const mapped = mapReviewRow(data)
-      if (mapped) {
+      if (mapped && !mapped.is_admin_proof) {
         setRemote((prev) => (prev.some((r) => r.id === mapped.id) ? prev : [mapped, ...prev]))
+        setIndex(0)
       } else {
-        fetchReviews()
+        await fetchReviews()
+        setIndex(0)
       }
       setName('')
       setRating(0)
@@ -385,7 +393,7 @@ export default function Reviews() {
             {err && <p className="bn text-sm text-red-700">{err}</p>}
             {ok && (
               <div className="bn rounded-xl bg-emerald-ink/5 p-3 text-center">
-                <p className="text-sm font-semibold text-emerald-mid">ধন্যবাদ! আপনার রিভিউ যোগ হয়েছে।</p>
+                <p className="text-sm font-semibold text-emerald-mid">আপনার রিভিউটি সফলভাবে জমা হয়েছে!</p>
                 <p className="mt-0.5 text-xs text-ink/60">৪★/৫★ রিভিউ সঙ্গে সঙ্গে সবার কাছে দেখা যাবে।</p>
               </div>
             )}
